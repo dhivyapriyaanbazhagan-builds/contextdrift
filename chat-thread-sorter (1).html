@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ContextDrift</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500&family=DM+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f7f5f0;--surface:#fff;--s2:#f0ede6;
+      --text:#1a1814;--t2:#6b6660;--t3:#9e9890;
+      --border:rgba(0,0,0,.10);--bmd:rgba(0,0,0,.18);
+      --acc:#2d4a3e;--alight:#e8f0ec;--atext:#1a3028;
+      --amlight:#fdf3e3;--amtext:#7a4c10;
+      --bllight:#e8f2fb;--bltext:#163a5e;
+      --colight:#fdecea;--cotext:#7a2418;
+      --r:10px;--rl:16px;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .layout{display:grid;grid-template-columns:288px 1fr;min-height:100vh}
+    .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.75rem 1.5rem;display:flex;flex-direction:column;gap:1.2rem}
+    .logo h1{font-family:'Instrument Serif',serif;font-size:21px;font-weight:400;line-height:1.25}
+    .logo p{font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5}
+    .divider{height:1px;background:var(--border)}
+    .flabel{font-size:11px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;display:block}
+    input[type=password]{width:100%;padding:8px 11px;border-radius:var(--r);border:1px solid var(--bmd);font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);color:var(--text)}
+    input[type=password]:focus{outline:2px solid var(--acc);border-color:transparent}
+    .note{font-size:11px;color:var(--t3);line-height:1.6;margin-top:4px}
+    .note a{color:var(--acc);text-decoration:none}
+    .stag{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--alight);color:var(--atext);margin-bottom:5px}
+    .sfooter{margin-top:auto;font-size:11px;color:var(--t3);line-height:1.6;padding-top:1rem;border-top:1px solid var(--border)}
+    .sfooter a{color:var(--acc);text-decoration:none}
+    .main{display:flex;flex-direction:column}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:.875rem 1.75rem;display:flex;align-items:center;gap:8px}
+    .pill{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:var(--s2);color:var(--t2);border:1px solid var(--border);transition:all .2s}
+    .pill.on{background:var(--alight);color:var(--atext);border-color:rgba(45,74,62,.2)}
+    .arr{color:var(--t3);font-size:11px}
+    .content{padding:1.75rem;flex:1}
+    .paste-card{background:var(--surface);border-radius:var(--rl);border:1px solid var(--border);overflow:hidden;margin-bottom:1.2rem}
+    .paste-hdr{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .paste-title{font-size:13px;font-weight:500}
+    .ccount{font-size:12px;color:var(--t3);font-family:'DM Mono',monospace}
+    textarea{width:100%;min-height:190px;padding:13px 16px;border:none;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);background:var(--surface);resize:vertical;line-height:1.75;display:block}
+    textarea:focus{outline:none}
+    .run-row{display:flex;gap:10px;align-items:center;margin-bottom:1.75rem;flex-wrap:wrap}
+    .btn-p{padding:9px 18px;border-radius:var(--r);border:none;background:var(--acc);color:#fff;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity .15s}
+    .btn-p:hover:not(:disabled){opacity:.84}
+    .btn-p:disabled{opacity:.4;cursor:not-allowed}
+    .btn-g{padding:9px 14px;border-radius:var(--r);border:1px solid var(--bmd);background:var(--surface);color:var(--t2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer}
+    .btn-g:hover{background:var(--s2)}
+    .status{font-size:13px;color:var(--t2)}
+    .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .stitle{font-family:'Instrument Serif',serif;font-size:19px;font-weight:400;margin-bottom:3px}
+    .ssub{font-size:13px;color:var(--t2);margin-bottom:1rem}
+    .tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:11px;margin-bottom:1.75rem}
+    .tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px;cursor:pointer;transition:border-color .15s,transform .1s;position:relative}
+    .tcard:hover{border-color:var(--bmd);transform:translateY(-1px)}
+    .tcard.sel{border:2px solid var(--acc)}
+    .tcard.dim{opacity:.32;pointer-events:none}
+    .ticon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:9px}
+    .tname{font-size:13px;font-weight:500;margin-bottom:3px}
+    .tdesc{font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:9px}
+    .tbadge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;display:inline-block}
+    .chk{position:absolute;top:11px;right:11px;width:19px;height:19px;border-radius:50%;background:var(--acc);color:#fff;font-size:11px;display:none;align-items:center;justify-content:center}
+    .tcard.sel .chk{display:flex}
+    .cg .ticon{background:var(--alight)} .cg .tbadge{background:var(--alight);color:var(--atext)}
+    .ca .ticon{background:var(--amlight)} .ca .tbadge{background:var(--amlight);color:var(--amtext)}
+    .cb .ticon{background:var(--bllight)} .cb .tbadge{background:var(--bllight);color:var(--bltext)}
+    .cc .ticon{background:var(--colight)} .cc .tbadge{background:var(--colight);color:var(--cotext)}
+    .ocard{background:var(--surface);border-radius:var(--rl);border:1px solid var(--border);overflow:hidden}
+    .ohdr{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .otitle{font-size:13px;font-weight:500}
+    .osub{font-size:11px;color:var(--t3);margin-top:2px}
+    .oactions{display:flex;gap:7px}
+    .btn-s{padding:5px 11px;border-radius:8px;border:1px solid var(--bmd);background:var(--surface);color:var(--t2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background .15s}
+    .btn-s:hover{background:var(--s2);color:var(--text)}
+    .btn-s.ok{background:var(--alight);color:var(--atext);border-color:rgba(45,74,62,.2)}
+    .obody{padding:16px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.85;color:var(--text);white-space:pre-wrap;max-height:360px;overflow-y:auto;background:var(--bg)}
+    .ofooter{padding:9px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--t3)}
+    .hidden{display:none!important}
+    @media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--border)}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>ContextDrift</h1>
+      <p>Detect topic drift in AI sessions.<br>Extract focused threads. Continue cleanly.</p>
+    </div>
+    <div>
+      <label class="flabel" for="apikey">Anthropic API key</label>
+      <input type="password" id="apikey" placeholder="sk-ant-..." autocomplete="off" />
+      <p class="note">Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Stays in your browser only.</p>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="stag">Sample loaded</div>
+      <p class="note">Pre-filled with a fictional PM session across three real workflows — roadmap prioritisation, user research synthesis, and stakeholder updates. Replace with your own conversation anytime.</p>
+    </div>
+    <div class="divider"></div>
+    <div class="sfooter">
+      Built with <a href="https://docs.anthropic.com" target="_blank">Anthropic API</a><br>
+      <span style="font-family:'DM Mono',monospace;font-size:10px">claude-sonnet-4-20250514</span><br><br>
+      Part of the <a href="https://github.com" target="_blank">ContextDrift</a> portfolio project.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="pill on" id="p1">1 · Paste</span><span class="arr">›</span>
+      <span class="pill" id="p2">2 · Detect</span><span class="arr">›</span>
+      <span class="pill" id="p3">3 · Select</span><span class="arr">›</span>
+      <span class="pill" id="p4">4 · Export</span>
+    </div>
+    <div class="content">
+      <div class="paste-card">
+        <div class="paste-hdr">
+          <span class="paste-title">Conversation — fictional PM session (3 mixed themes)</span>
+          <span class="ccount" id="cc">0 chars</span>
+        </div>
+        <textarea id="conv" oninput="cnt()"></textarea>
+      </div>
+      <div class="run-row">
+        <button class="btn-p" id="rbtn" onclick="detect()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Analyse conversation
+          <span class="spin" id="spin"></span>
+        </button>
+        <button class="btn-g" onclick="clearAll()">Clear</button>
+        <span class="status" id="st"></span>
+      </div>
+      <div id="tsec" class="hidden">
+        <p class="stitle" id="ttitle"></p>
+        <p class="ssub" id="tsub"></p>
+        <div class="tgrid" id="tgrid"></div>
+      </div>
+      <div id="osec" class="hidden">
+        <div class="ocard">
+          <div class="ohdr">
+            <div>
+              <div class="otitle" id="otitle">Extracted thread</div>
+              <div class="osub" id="osub"></div>
+            </div>
+            <div class="oactions">
+              <button class="btn-s" id="cpbtn" onclick="cpOut()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+              </button>
+              <button class="btn-s" onclick="dlOut()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download .txt
+              </button>
+              <button class="btn-s" onclick="showT()">&#8592; Back</button>
+            </div>
+          </div>
+          <div class="obody" id="obody"></div>
+          <div class="ofooter">Paste into a new chat window to continue with focused, noise-free context.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const COLS=['cg','ca','cb','cc'];
+let msgs=[],themes=[];
+const SAMPLE="User: We have three features on the Q3 roadmap - smart notifications, bulk export, and an onboarding redesign. We only have capacity for two. Help me think through the tradeoffs.\n\nAssistant: Good framing. Smart notifications drives retention - users who get relevant nudges return 2-3x more. But it's engineering-heavy and needs a solid data pipeline. Bulk export is a classic enterprise unlock - low effort, high B2B conversion signal, but mostly serves power users. Onboarding redesign has the highest ROI if activation is below 40%, because every user who churns in week one is a customer you'll never recover. My read: drop bulk export for Q3 unless a specific deal depends on it. Choose onboarding if activation is your bottleneck, notifications if retention is.\n\nUser: Activation is sitting at 32%. That makes the onboarding case clearer. But engineering is pushing back - they say it's a 6-week project and smart notifications is only 3 weeks. How do I make the case?\n\nAssistant: Frame it in terms of compounding impact, not build time. A 32% activation rate means 68% of acquired users never see real value. Even a 10-point lift compounds across every acquisition dollar you spend going forward. Smart notifications only benefits users who already activated - you'd be optimising the smaller pool. Use this in your planning session: if monthly signups are 1000 and you lift activation 10 points, that's 100 extra retained users per month. Show that number over 6 months versus the 3-week build argument.\n\nUser: That projection framing is exactly what I needed. Will use it in the roadmap review on Thursday.\n\nAssistant: Good luck. One more thing - bring a one-page before/after of the current onboarding flow so the discussion stays concrete. Engineers respond better when they can see exactly what is changing.\n\nUser: I ran six user interviews last week on the search feature. Notes are scattered across docs. Can you help me find a synthesis approach?\n\nAssistant: Use affinity mapping in three passes. First pass - extract every distinct observation as a standalone statement, one idea per line, no interpretation yet. Second pass - group by similarity, let clusters form naturally without forcing labels. Third pass - name each cluster as a tension, not a topic. Instead of 'Filter usage', write 'Users know filters exist but avoid them because they don't trust the results will narrow rather than disappear'. That tension framing is what makes synthesis actionable rather than just descriptive. Six interviews should give you four to seven clusters.\n\nUser: The tension framing is new to me. Can you show me how a topic label becomes a tension label for a search insight?\n\nAssistant: Topic label: Search abandonment. Tension label: Users trust the search bar enough to start there but abandon it after one failed result rather than refining their query. The difference - the topic label describes a behaviour, the tension label explains the underlying belief causing it and immediately suggests a direction. In this case: show query suggestions or results-count previews so users feel confident refining rather than giving up. Topic labels produce reports. Tension labels produce product decisions.\n\nUser: How do I present qualitative findings to a team that is skeptical of research?\n\nAssistant: Lead with behaviour, not opinion. Open with what you watched six people do before you move to interpretation. Skeptics discount what users say but struggle to dismiss what users did. Second, be explicit about confidence - 'this appeared in four of six sessions, which is directional not conclusive'. That honesty builds credibility. Third, pair each qualitative insight with one quantitative signal wherever you can. If users abandoned search in interviews, pull your search-to-click rate from analytics. When the story and the number point the same direction, skeptics tend to follow.\n\nUser: I need to send a weekly update to the VP of Product and the engineering lead. Covers what shipped, what's blocked, and what's next. Help me with a format.\n\nAssistant: Four sections, scannable in under two minutes. One - Shipped this week: bullet list, one line each, link to ticket or changelog. Two - Impact so far: one or two metrics if available. This is the section most PMs skip and the one stakeholders care most about. Three - Blockers and decisions needed: be specific about what you need and from whom. Do not bury asks in prose. Four - Coming next week: three items maximum. If you have more than three, you are either over-committing or under-editing. Keep the whole update under 200 words. Longer than that and it will not be read.\n\nUser: I tend to over-explain because I worry about being blamed for delays. How do I resist that?\n\nAssistant: One editing pass, one rule - remove every sentence that exists to protect you rather than inform the reader. Context written out of anxiety is not context, it's insurance. Cut it. If a stakeholder needs background they will ask. What they will not do is read three paragraphs of explanation unprompted. A short, clear update signals confidence. A long, hedged one signals the opposite.\n\nUser: Draft me an example update - onboarding redesign kicked off, bulk export deprioritised, user research readout scheduled for Friday.\n\nAssistant: Here is a draft.\n\nWeek of [date]\n\nShipped\n- Onboarding redesign kicked off - design sprint starts Monday, prototype by end of week\n\nImpact\n- Activation at 32% - this is our primary lever to move it this quarter\n\nDecisions made\n- Bulk export moved to Q4 to protect onboarding capacity\n\nComing next week\n- User research readout Friday - search behaviour findings, 4-7 insight clusters\n- Onboarding prototype review with design\n- Q3 roadmap locked for engineering kickoff";
+
+window.onload=()=>{
+  document.getElementById('conv').value=SAMPLE;
+  cnt();
+};
+
+function cnt(){
+  const v=document.getElementById('conv').value;
+  document.getElementById('cc').textContent=v.length.toLocaleString()+' chars';
+}
+function pills(n){
+  for(let i=1;i<=4;i++) document.getElementById('p'+i).className='pill'+(i<=n?' on':'');
+}
+function clearAll(){
+  document.getElementById('conv').value=SAMPLE;cnt();
+  document.getElementById('tsec').classList.add('hidden');
+  document.getElementById('osec').classList.add('hidden');
+  document.getElementById('st').textContent='';pills(1);
+}
+function showT(){
+  document.getElementById('osec').classList.add('hidden');
+  document.getElementById('tsec').classList.remove('hidden');
+  document.querySelectorAll('.tcard').forEach(c=>{c.className=c.className.replace(' sel','').replace(' dim','')});
+  pills(2);
+}
+
+async function detect(){
+  const conv=document.getElementById('conv').value.trim();
+  const key=document.getElementById('apikey').value.trim();
+  if(!conv){document.getElementById('st').textContent='Paste a conversation first.';return}
+  if(!key){document.getElementById('st').textContent='Enter your Anthropic API key in the sidebar.';return}
+  const btn=document.getElementById('rbtn'),sp=document.getElementById('spin');
+  btn.disabled=true;sp.style.display='inline-block';
+  document.getElementById('st').textContent='Analysing with Claude...';
+  document.getElementById('tsec').classList.add('hidden');
+  document.getElementById('osec').classList.add('hidden');
+  pills(2);
+  const prompt=`Analyse this conversation and identify distinct themes. Return ONLY valid JSON, no markdown, no explanation:
+{"messages":[{"index":0,"role":"User","text":"..."},{"index":1,"role":"Assistant","text":"..."}],"themes":[{"name":"2-4 word name","description":"One sentence.","messageIndices":[0,1],"emoji":"single emoji"}]}
+Conversation:
+${conv.slice(0,7000)}`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status)}
+    const d=await r.json();
+    let raw=d.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    const p=JSON.parse(raw);
+    msgs=p.messages||[];themes=p.themes||[];
+    if(!themes.length) throw new Error('No themes detected — try a longer conversation.');
+    renderThemes();pills(3);
+    document.getElementById('st').textContent='';
+  }catch(e){
+    document.getElementById('st').textContent='Error: '+e.message;pills(1);
+  }finally{
+    btn.disabled=false;sp.style.display='none';
+  }
+}
+
+function renderThemes(){
+  const g=document.getElementById('tgrid');
+  document.getElementById('ttitle').textContent=themes.length+' theme'+(themes.length>1?'s':'')+' detected';
+  document.getElementById('tsub').textContent=msgs.length+' messages analysed — click a theme to extract its thread.';
+  g.innerHTML='';
+  themes.forEach((t,i)=>{
+    const c=COLS[i%COLS.length],d=document.createElement('div');
+    d.className='tcard '+c;
+    d.innerHTML=`<div class="chk">&#10003;</div><div class="ticon">${t.emoji||'📁'}</div><div class="tname">${esc(t.name)}</div><div class="tdesc">${esc(t.description)}</div><span class="tbadge">${t.messageIndices.length} messages</span>`;
+    d.onclick=()=>pick(i);
+    g.appendChild(d);
+  });
+  document.getElementById('tsec').classList.remove('hidden');
+}
+
+function pick(idx){
+  document.querySelectorAll('.tcard').forEach((c,i)=>{
+    c.className=c.className.replace(' sel','').replace(' dim','');
+    c.classList.add(i===idx?'sel':'dim');
+  });
+  buildOut(idx);pills(4);
+}
+
+function buildOut(idx){
+  const t=themes[idx],kept=t.messageIndices.map(i=>msgs[i]).filter(Boolean);
+  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let out=`FOCUSED THREAD — "${t.name}"
+Extracted ${date} | ${kept.length} of ${msgs.length} messages kept
+${t.description}
+${'─'.repeat(54)}
+
+`;
+  kept.forEach(m=>{out+=`${m.role.toUpperCase()}
+${m.text}
+
+`});
+  out+=`${'─'.repeat(54)}
+[Paste into a new chat to continue on "${t.name}" with clean context]`;
+  document.getElementById('otitle').textContent='Thread: '+t.name;
+  document.getElementById('osub').textContent=kept.length+' messages · ready to paste into a new chat';
+  document.getElementById('obody').textContent=out;
+  document.getElementById('tsec').classList.add('hidden');
+  document.getElementById('osec').classList.remove('hidden');
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function cpOut(){
+  navigator.clipboard.writeText(document.getElementById('obody').textContent).then(()=>{
+    const b=document.getElementById('cpbtn');b.classList.add('ok');b.textContent='Copied';
+    setTimeout(()=>{b.classList.remove('ok');b.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy'},2000);
+  });
+}
+function dlOut(){
+  const text=document.getElementById('obody').textContent;
+  const name=document.getElementById('otitle').textContent.replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+  a.download='thread-'+name+'.txt';a.click();
+}
+</script>
+</body>
+</html>
