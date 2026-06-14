@@ -16,8 +16,6 @@ Every LLM processes your **entire conversation history** on every response. That
 | **System prompt erosion** | The "lost in the middle" effect (Liu et al., Stanford 2023) — LLMs recall context at the edges of a window better than content buried in the middle. Your early instructions fade. |
 | **Token waste** | Every API call re-processes the full history. You're paying compute cost on noise unrelated to your current question. |
 
-No AI chat product has solved this natively yet.
-
 ---
 
 ## What this does
@@ -56,14 +54,6 @@ No installation. No backend. No framework.
 4. Paste the key into the field in the sidebar
 
 > **Note:** The Anthropic API requires separate credits from a Claude.ai Pro subscription. A $5 top-up is enough for extensive testing — each conversation analysis costs roughly $0.01–0.03.
-
----
-
-## Demo without an API key
-
-Open `chat-thread-sorter (1).html` — it includes a built-in demo mode in the sidebar that walks through the full flow using a pre-analysed PM conversation. No API key needed to see how it works.
-
----
 
 ## Why this should be a native feature
 
